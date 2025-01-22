@@ -12,7 +12,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-// UploadFolder uploads all files from a local folder to Google Drive.
 func UploadFolder(client *http.Client, folderPath string) error {
 	srv, err := drive.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
