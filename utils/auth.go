@@ -20,6 +20,7 @@ func GetDriveClient() (*http.Client, *models.ErrorResponse) {
 		ClientID:     config.GetGoogleClientID(),
 		ClientSecret: config.GetGoogleClientSecret(),
 		Endpoint:     google.Endpoint,
+		RedirectURL:  "http://localhost",
 		Scopes:       []string{drive.DriveFileScope},
 	}
 
@@ -31,30 +32,30 @@ func GetDriveClient() (*http.Client, *models.ErrorResponse) {
 }
 
 func GetClient(config *oauth2.Config) (*http.Client, *models.ErrorResponse) {
-    tokenFile := "token.json"
-    token, err := tokenFromFile(tokenFile)
-    if err != nil {
-        token = getTokenFromWeb(config)
-        if err := saveToken(tokenFile, token); err != nil {
-            return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save oauth token: %v", err)}
-        }
-    }
+	tokenFile := "token.json"
+	token, err := tokenFromFile(tokenFile)
+	if err != nil {
+		token = getTokenFromWeb(config)
+		if err := saveToken(tokenFile, token); err != nil {
+			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save oauth token: %v", err)}
+		}
+	}
 
-    tokenSource := config.TokenSource(context.Background(), token)
-    client := oauth2.NewClient(context.Background(), tokenSource)
+	tokenSource := config.TokenSource(context.Background(), token)
+	client := oauth2.NewClient(context.Background(), tokenSource)
 
-    newToken, err := tokenSource.Token()
-    if err != nil {
-        return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to refresh token: %v", err)}
-    }
+	newToken, err := tokenSource.Token()
+	if err != nil {
+		return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to refresh token: %v", err)}
+	}
 
-    if newToken.AccessToken != token.AccessToken {
-        if err := saveToken(tokenFile, newToken); err != nil {
-            return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save refreshed token: %v", err)}
-        }
-    }
+	if newToken.AccessToken != token.AccessToken {
+		if err := saveToken(tokenFile, newToken); err != nil {
+			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save refreshed token: %v", err)}
+		}
+	}
 
-    return client, nil
+	return client, nil
 }
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
