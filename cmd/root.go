@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"mydriveuploader/drive"
-
 	"github.com/spf13/cobra"
 )
 
@@ -16,5 +14,5 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.AddCommand(drive.UploadCmd)
+	rootCmd.AddCommand(serveCmd)
 }
