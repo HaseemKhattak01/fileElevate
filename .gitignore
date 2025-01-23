@@ -1,7 +1,4 @@
 # Sensitive files
 .env
-credentials.json
-token.json
+*.json
 
-# Documentation files
-Readme.md
