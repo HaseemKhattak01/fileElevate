@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"mydriveuploader/config"
+	"mydriveuploader/models"
 	"net/http"
 	"os"
 
@@ -13,39 +15,31 @@ import (
 	"google.golang.org/api/drive/v3"
 )
 
-func GetDriveClient(credentialsFile string) (*http.Client, error) {
-	b, err := os.Open(credentialsFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read client secret file: %v", err)
+func GetDriveClient() (*http.Client, *models.ErrorResponse) {
+	config := &oauth2.Config{
+		ClientID:     config.GetGoogleClientID(),
+		ClientSecret: config.GetGoogleClientSecret(),
+		Endpoint:     google.Endpoint,
+		Scopes:       []string{drive.DriveFileScope},
 	}
 
-	defer b.Close()
-	fileInfo, err := b.Stat()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get file info: %v", err)
+	client, errResp := GetClient(config)
+	if errResp != nil {
+		return nil, errResp
 	}
-	size := fileInfo.Size()
-	buffer := make([]byte, size)
-	_, err = b.Read(buffer)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read client secret file: %v", err)
-	}
-	config, err := google.ConfigFromJSON(buffer, drive.DriveFileScope)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse client secret file to config: %v", err)
-	}
-
-	return getClient(config), nil
+	return client, nil
 }
 
-func getClient(config *oauth2.Config) *http.Client {
+func GetClient(config *oauth2.Config) (*http.Client, *models.ErrorResponse) {
 	tokenFile := "token.json"
 	token, err := tokenFromFile(tokenFile)
 	if err != nil {
 		token = getTokenFromWeb(config)
-		saveToken(tokenFile, token)
+		if err := saveToken(tokenFile, token); err != nil {
+			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save oauth token: %v", err)}
+		}
 	}
-	return config.Client(context.Background(), token)
+	return config.Client(context.Background(), token), nil
 }
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
@@ -75,12 +69,12 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	return token, err
 }
 
-func saveToken(path string, token *oauth2.Token) {
+func saveToken(path string, token *oauth2.Token) error {
 	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Unable to cache oauth token: %v", err)
+		return fmt.Errorf("unable to cache oauth token: %v", err)
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+	return json.NewEncoder(f).Encode(token)
 }

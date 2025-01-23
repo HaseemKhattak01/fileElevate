@@ -1,23 +1,20 @@
 package cmd
 
 import (
-    "fmt"
-    "github.com/spf13/cobra"
-    "os"
+	"mydriveuploader/drive"
+
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-    Use:   "my_cobra_project",
-    Short: "A brief description of your application",
-    Long:  `A longer description that spans multiple lines and likely contains examples and usage of using your application.`,
-    Run: func(cmd *cobra.Command, args []string) {
-        fmt.Println("Hello from Cobra CLI!")
-    },
+	Use:   "mydriveuploader",
+	Short: "MyDriveUploader is a CLI tool for uploading files to Google Drive",
 }
 
-func Execute() {
-    if err := rootCmd.Execute(); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
+func Execute() error {
+	return rootCmd.Execute()
+}
+
+func init() {
+	rootCmd.AddCommand(drive.UploadCmd)
 }
