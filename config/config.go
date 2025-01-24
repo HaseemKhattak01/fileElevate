@@ -21,3 +21,7 @@ func GetGoogleClientID() string {
 func GetGoogleClientSecret() string {
 	return os.Getenv("GOOGLE_CLIENT_SECRET")
 }
+
+func GetDropBoxToken() string{
+	return os.Getenv("DROPBOX_TOKEN")
+}
