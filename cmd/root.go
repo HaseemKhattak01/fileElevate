@@ -5,7 +5,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "mydriveuploader",
+	Use:   "github.com/HaseemKhattak01/mydriveuploader",
 	Short: "MyDriveUploader is a CLI tool for uploading files to Google Drive",
 }
 

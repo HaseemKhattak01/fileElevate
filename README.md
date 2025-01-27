@@ -1,4 +1,4 @@
-# mydriveuploader
+# github.com/HaseemKhattak01/mydriveuploader
 
 ## Overview
 
@@ -17,11 +17,11 @@ To install MyDriveUploader, follow these steps:
 
 1. **Clone the Repository**: Open your terminal and run the following command to clone the repository:
    ```bash
-   git clone https://github.com/HaseemKhattak01/mydriveuploader
+   git clone https://github.com/HaseemKhattak01/github.com/HaseemKhattak01/mydriveuploader
    ```
 2. **Navigate to the Project Directory**: Change into the project directory:
    ```bash
-   cd mydriveuploader
+   cd github.com/HaseemKhattak01/mydriveuploader
    ```
 3. **Build the Executable**: Compile the application by running:
    ```bash

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"mydriveuploader/config"
+	"github.com/HaseemKhattak01/mydriveuploader/config"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
@@ -15,7 +15,7 @@ import (
 func UploadFolderToDropbox(localFolderPath, dropboxFolderPath string) error {
 	dbxConfig := dropbox.Config{
 		Token:    config.GetDropBoxToken(),
-		LogLevel: dropbox.LogInfo, // Change to dropbox.LogOff for no logging
+		LogLevel: dropbox.LogInfo,
 	}
 	dbx := files.New(dbxConfig)
 
@@ -30,7 +30,6 @@ func UploadFolderToDropbox(localFolderPath, dropboxFolderPath string) error {
 			}
 			defer content.Close()
 
-			// Ensure the Dropbox path uses forward slashes and is well-formed
 			dropboxPath := filepath.ToSlash(filepath.Join(dropboxFolderPath, info.Name()))
 			if dropboxPath == "" || dropboxPath == "/" {
 				return fmt.Errorf("malformed Dropbox path: %s", dropboxPath)

@@ -1,4 +1,4 @@
-module mydriveuploader
+module github.com/HaseemKhattak01/mydriveuploader
 
 go 1.22.5
 

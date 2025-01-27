@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"mydriveuploader/config"
-	"mydriveuploader/models"
 	"net/http"
 	"os"
+
+	"github.com/HaseemKhattak01/mydriveuploader/config"
+	"github.com/HaseemKhattak01/mydriveuploader/models"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

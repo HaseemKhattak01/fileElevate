@@ -3,9 +3,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"mydriveuploader/drive"
-	"mydriveuploader/dropbox"
-	"mydriveuploader/utils"
+
+	"github.com/HaseemKhattak01/mydriveuploader/drive"
+	"github.com/HaseemKhattak01/mydriveuploader/dropbox"
+	"github.com/HaseemKhattak01/mydriveuploader/utils"
 
 	"github.com/spf13/cobra"
 )
