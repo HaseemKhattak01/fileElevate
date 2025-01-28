@@ -10,39 +10,36 @@ import (
 
 	"github.com/HaseemKhattak01/mydriveuploader/config"
 	"github.com/HaseemKhattak01/mydriveuploader/models"
+	"google.golang.org/api/drive/v2"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/drive/v3"
 )
 
 func GetDriveClient() (*http.Client, *models.ErrorResponse) {
-	config := &oauth2.Config{
-		ClientID:     config.GetGoogleClientID(),
-		ClientSecret: config.GetGoogleClientSecret(),
+	cfg := config.GetConfig()
+	oauthConfig := &oauth2.Config{
+		ClientID:     cfg.GoogleClientID,
+		ClientSecret: cfg.GoogleClientSecret,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  "http://localhost",
+		RedirectURL:  cfg.RedirectURI,
 		Scopes:       []string{drive.DriveFileScope},
 	}
 
-	client, errResp := GetClient(config)
-	if errResp != nil {
-		return nil, errResp
-	}
-	return client, nil
+	return GetClient(oauthConfig)
 }
 
-func GetClient(config *oauth2.Config) (*http.Client, *models.ErrorResponse) {
+func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse) {
 	tokenFile := "token.json"
 	token, err := tokenFromFile(tokenFile)
 	if err != nil {
-		token = getTokenFromWeb(config)
+		token = getTokenFromWeb(oauthConfig)
 		if err := saveToken(tokenFile, token); err != nil {
 			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save oauth token: %v", err)}
 		}
 	}
 
-	tokenSource := config.TokenSource(context.Background(), token)
+	tokenSource := oauthConfig.TokenSource(context.Background(), token)
 	client := oauth2.NewClient(context.Background(), tokenSource)
 
 	newToken, err := tokenSource.Token()
@@ -59,8 +56,8 @@ func GetClient(config *oauth2.Config) (*http.Client, *models.ErrorResponse) {
 	return client, nil
 }
 
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+func getTokenFromWeb(oauthConfig *oauth2.Config) *oauth2.Token {
+	authURL := oauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the authorization code: \n%v\n", authURL)
 
 	var authCode string
@@ -68,7 +65,7 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 		log.Fatalf("Unable to read authorization code: %v", err)
 	}
 
-	token, err := config.Exchange(context.TODO(), authCode)
+	token, err := oauthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
 		log.Fatalf("Unable to retrieve token from web: %v", err)
 	}
