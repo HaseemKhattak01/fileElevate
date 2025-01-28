@@ -31,8 +31,8 @@ var (
 		RunE:  executeDropboxUpload,
 	}
 
-	serveCmd = &cobra.Command{
-		Use:   "serve",
+	serverCmd = &cobra.Command{
+		Use:   "server",
 		Short: "Start the web server for OAuth",
 		Run:   startWebServer,
 	}

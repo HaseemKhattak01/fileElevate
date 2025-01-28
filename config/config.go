@@ -12,7 +12,7 @@ type Config struct {
 	GoogleClientSecret string
 	AppKey             string
 	AppSecret          string
-	RedirectURI        string
+	RedirectURL        string
 }
 
 var config Config
@@ -28,7 +28,7 @@ func LoadConfig() {
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		AppKey:             os.Getenv("APP_KEY"),
 		AppSecret:          os.Getenv("APP_SECRET"),
-		RedirectURI:        os.Getenv("DROPBOX_REDIRECT_URI"),
+		RedirectURL:        os.Getenv("DROPBOX_REDIRECT_URL"),
 	}
 }
 

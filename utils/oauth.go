@@ -10,11 +10,11 @@ import (
 )
 
 // getOAuthConfig returns the OAuth2 configuration for Dropbox
-func getOAuthConfig(appKey, appSecret, redirectURI string) *oauth2.Config {
+func getOAuthConfig(appKey, appSecret, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     appKey,
 		ClientSecret: appSecret,
-		RedirectURL:  redirectURI,
+		RedirectURL:  redirectURL,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://www.dropbox.com/oauth2/authorize",
 			TokenURL: "https://api.dropboxapi.com/oauth2/token",
@@ -25,16 +25,14 @@ func getOAuthConfig(appKey, appSecret, redirectURI string) *oauth2.Config {
 
 func GetOAuthStartURL() string {
 	cfg := config.GetConfig()
-	return fmt.Sprintf("https://www.dropbox.com/oauth2/authorize?client_id=%s&token_access_type=offline&response_type=code&redirect_uri=%s", cfg.AppKey, cfg.RedirectURI)
+	return fmt.Sprintf("https://www.dropbox.com/oauth2/authorize?client_id=%s&token_access_type=offline&response_type=code&redirect_url=%s", cfg.AppKey, cfg.RedirectURL)
 }
 
-// StartOAuthFlow initiates the OAuth 2.0 flow by redirecting to the Dropbox authorization URL
 func StartOAuthFlow(w http.ResponseWriter, r *http.Request) {
 	authURL := GetOAuthStartURL()
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
-// HandleOAuthCallback processes the OAuth callback and exchanges the code for an access token
 func HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
@@ -43,7 +41,7 @@ func HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := config.GetConfig()
-	token, err := ExchangeCodeForToken(cfg.AppKey, cfg.AppSecret, code, cfg.RedirectURI)
+	token, err := ExchangeCodeForToken(cfg.AppKey, cfg.AppSecret, code, cfg.RedirectURL)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get token: %v", err), http.StatusInternalServerError)
 		return
@@ -58,7 +56,6 @@ func HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Access Token saved successfully")
 }
 
-// ExchangeCodeForToken exchanges the authorization code for an access token
 func ExchangeCodeForToken(appKey, appSecret, code, redirectURI string) (*oauth2.Token, error) {
 	conf := getOAuthConfig(appKey, appSecret, redirectURI)
 	token, err := conf.Exchange(context.TODO(), code)

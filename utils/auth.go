@@ -22,7 +22,7 @@ func GetDriveClient() (*http.Client, *models.ErrorResponse) {
 		ClientID:     cfg.GoogleClientID,
 		ClientSecret: cfg.GoogleClientSecret,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  cfg.RedirectURI,
+		RedirectURL:  cfg.RedirectURL,
 		Scopes:       []string{drive.DriveFileScope},
 	}
 
