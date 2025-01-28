@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
 
 	"github.com/HaseemKhattak01/mydriveuploader/drive"
 	"github.com/HaseemKhattak01/mydriveuploader/dropbox"
@@ -52,11 +54,29 @@ func init() {
 
 func startWebServer(cmd *cobra.Command, args []string) {
 	startURL := utils.GetOAuthStartURL()
-	fmt.Printf("Open the following URL in your browser to start the OAuth flow:\n%s\n", startURL)
+	err := openBrowser(startURL)
+	if err != nil {
+		log.Printf("Failed to open browser: %v", err)
+	}
 	http.HandleFunc("/oauth/callback", utils.HandleOAuthCallback)
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func openBrowser(url string) error {
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	return err
 }
 
 func executeDriveUpload(cmd *cobra.Command, args []string) error {

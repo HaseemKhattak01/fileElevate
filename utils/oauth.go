@@ -10,11 +10,11 @@ import (
 )
 
 // getOAuthConfig returns the OAuth2 configuration for Dropbox
-func getOAuthConfig(appKey, appSecret, redirectURL string) *oauth2.Config {
+func getOAuthConfig(appKey, appSecret, redirectURI string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     appKey,
 		ClientSecret: appSecret,
-		RedirectURL:  redirectURL,
+		RedirectURL:  redirectURI,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://www.dropbox.com/oauth2/authorize",
 			TokenURL: "https://api.dropboxapi.com/oauth2/token",
