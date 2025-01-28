@@ -16,4 +16,5 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(dropboxCmd)
 	rootCmd.AddCommand(googleDriveCmd)
+	rootCmd.AddCommand(serveCmd)
 }

@@ -6,29 +6,25 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/HaseemKhattak01/mydriveuploader/utils"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
 )
 
-// UploadFolderToDropbox uploads a local folder to Dropbox
 func UploadFolderToDropbox(localFolderPath, dropboxFolderPath string) error {
-	accessToken := os.Getenv("DROPBOX_ACCESS_TOKEN")
-	if accessToken == "" {
-		return fmt.Errorf("access token is not set")
+	token, err := utils.TokenFromFile("DropBoxToken.json")
+	if err != nil {
+		return fmt.Errorf("failed to read access token: %w", err)
 	}
 
-	dbxConfig := dropbox.Config{
-		Token:    accessToken,
+	dbx := files.New(dropbox.Config{
+		Token:    token.AccessToken,
 		LogLevel: dropbox.LogInfo,
-	}
-	dbx := files.New(dbxConfig)
+	})
 
 	return filepath.Walk(localFolderPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
+		if err != nil || info.IsDir() {
 			return err
-		}
-		if info.IsDir() {
-			return nil
 		}
 
 		if err := uploadFileToDropbox(dbx, path, dropboxFolderPath, info.Name()); err != nil {
@@ -51,8 +47,7 @@ func uploadFileToDropbox(dbx files.Client, localFilePath, dropboxFolderPath, fil
 		return fmt.Errorf("malformed Dropbox path: %s", dropboxPath)
 	}
 
-	commitInfo := files.NewUploadArg(dropboxPath)
-	_, err = dbx.Upload(commitInfo, content)
+	_, err = dbx.Upload(files.NewUploadArg(dropboxPath), content)
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}

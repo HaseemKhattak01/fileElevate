@@ -26,7 +26,7 @@ func UploadFolder(client *http.Client, folderPath string) error {
 			return nil
 		}
 
-		if err := uploadFile(srv, path, info.Name()); err != nil {
+		if err := UploadFile(srv, path, info.Name()); err != nil {
 			return fmt.Errorf("failed to upload file %s: %v", info.Name(), err)
 		}
 		log.Printf("Uploaded file: %s", info.Name())
@@ -34,7 +34,7 @@ func UploadFolder(client *http.Client, folderPath string) error {
 	})
 }
 
-func uploadFile(srv *drive.Service, filePath, fileName string) error {
+func UploadFile(srv *drive.Service, filePath, fileName string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("unable to open file %s: %v", fileName, err)

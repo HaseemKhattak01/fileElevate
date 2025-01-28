@@ -31,10 +31,10 @@ func GetDriveClient() (*http.Client, *models.ErrorResponse) {
 
 func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse) {
 	tokenFile := "token.json"
-	token, err := tokenFromFile(tokenFile)
+	token, err := TokenFromFile(tokenFile)
 	if err != nil {
-		token = getTokenFromWeb(oauthConfig)
-		if err := saveToken(tokenFile, token); err != nil {
+		token = GetTokenFromWeb(oauthConfig)
+		if err := SaveToken(tokenFile, token); err != nil {
 			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save oauth token: %v", err)}
 		}
 	}
@@ -48,7 +48,7 @@ func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse)
 	}
 
 	if newToken.AccessToken != token.AccessToken {
-		if err := saveToken(tokenFile, newToken); err != nil {
+		if err := SaveToken(tokenFile, newToken); err != nil {
 			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save refreshed token: %v", err)}
 		}
 	}
@@ -56,7 +56,7 @@ func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse)
 	return client, nil
 }
 
-func getTokenFromWeb(oauthConfig *oauth2.Config) *oauth2.Token {
+func GetTokenFromWeb(oauthConfig *oauth2.Config) *oauth2.Token {
 	authURL := oauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the authorization code: \n%v\n", authURL)
 
@@ -72,7 +72,7 @@ func getTokenFromWeb(oauthConfig *oauth2.Config) *oauth2.Token {
 	return token
 }
 
-func tokenFromFile(file string) (*oauth2.Token, error) {
+func TokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	return token, err
 }
 
-func saveToken(path string, token *oauth2.Token) error {
+func SaveToken(path string, token *oauth2.Token) error {
 	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
