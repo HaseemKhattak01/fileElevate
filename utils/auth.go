@@ -63,12 +63,30 @@ func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse)
 
 func GetTokenFromWeb(oauthConfig *oauth2.Config) *oauth2.Token {
 	authURL := oauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the authorization code: \n%v\n", authURL)
+	fmt.Printf("Go to the following link in your browser: \n%v\n", authURL)
 
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
-	}
+	// Start a local server to handle the callback
+	codeChan := make(chan string)
+	srv := &http.Server{Addr: ":8080"}
+
+	http.HandleFunc("/oauth2callback", func(w http.ResponseWriter, r *http.Request) {
+		code := r.URL.Query().Get("code")
+		if code == "" {
+			http.Error(w, "Code not found", http.StatusBadRequest)
+			return
+		}
+		fmt.Fprintf(w, "Authorization successful, you can close this window.")
+		codeChan <- code
+	})
+
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+
+	authCode := <-codeChan
+	srv.Shutdown(context.Background())
 
 	token, err := oauthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
