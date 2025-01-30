@@ -22,7 +22,7 @@ func GetDriveClient() (*http.Client, *models.ErrorResponse) {
 		ClientID:     cfg.GoogleClientID,
 		ClientSecret: cfg.GoogleClientSecret,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  cfg.RedirectURL,
+		RedirectURL:  cfg.RedirectURIs,
 		Scopes:       []string{drive.DriveFileScope},
 	}
 
@@ -44,7 +44,12 @@ func GetClient(oauthConfig *oauth2.Config) (*http.Client, *models.ErrorResponse)
 
 	newToken, err := tokenSource.Token()
 	if err != nil {
-		return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to refresh token: %v", err)}
+		fmt.Println("Token is invalid or expired. Please re-authenticate.")
+		token = GetTokenFromWeb(oauthConfig)
+		if err := SaveToken(tokenFile, token); err != nil {
+			return nil, &models.ErrorResponse{Error: fmt.Sprintf("unable to save refreshed token: %v", err)}
+		}
+		client = oauth2.NewClient(context.Background(), oauthConfig.TokenSource(context.Background(), token))
 	}
 
 	if newToken.AccessToken != token.AccessToken {

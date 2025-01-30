@@ -25,12 +25,7 @@ func getOAuthConfig(appKey, appSecret, redirectURI string) *oauth2.Config {
 
 func GetOAuthStartURL() string {
 	cfg := config.GetConfig()
-	return fmt.Sprintf("https://www.dropbox.com/oauth2/authorize?client_id=%s&token_access_type=offline&response_type=code&redirect_url=%s", cfg.AppKey, cfg.RedirectURL)
-}
-
-func StartOAuthFlow(w http.ResponseWriter, r *http.Request) {
-	authURL := GetOAuthStartURL()
-	http.Redirect(w, r, authURL, http.StatusFound)
+	return fmt.Sprintf("https://www.dropbox.com/oauth2/authorize?client_id=%s&token_access_type=offline&response_type=code&redirect_uri=%s", cfg.AppKey, cfg.RedirectURL)
 }
 
 func HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
@@ -63,4 +58,14 @@ func ExchangeCodeForToken(appKey, appSecret, code, redirectURI string) (*oauth2.
 		return nil, fmt.Errorf("failed to exchange token: %w", err)
 	}
 	return token, nil
+}
+
+func RefreshToken(appKey, appSecret, refreshToken string) (*oauth2.Token, error) {
+	conf := getOAuthConfig(appKey, appSecret, "")
+	tokenSource := conf.TokenSource(context.TODO(), &oauth2.Token{RefreshToken: refreshToken})
+	newToken, err := tokenSource.Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh token: %w", err)
+	}
+	return newToken, nil
 }

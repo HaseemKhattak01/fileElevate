@@ -5,105 +5,113 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os/exec"
-	"runtime"
 
+	"github.com/HaseemKhattak01/mydriveuploader/config"
 	"github.com/HaseemKhattak01/mydriveuploader/drive"
 	"github.com/HaseemKhattak01/mydriveuploader/dropbox"
 	"github.com/HaseemKhattak01/mydriveuploader/utils"
-
 	"github.com/spf13/cobra"
 )
 
 var (
-	folderPath  string
-	dropboxPath string
+	FolderPath  string
+	DropboxPath string
 )
 
 var (
 	googleDriveCmd = &cobra.Command{
 		Use:   "uploadG",
 		Short: "Upload files from local machine to Google Drive",
-		RunE:  executeDriveUpload,
+		RunE:  ExecuteDriveUpload,
 	}
 
 	dropboxCmd = &cobra.Command{
 		Use:   "uploadD",
 		Short: "Upload files from local machine to Dropbox",
-		RunE:  executeDropboxUpload,
+		RunE:  ExecuteDropboxUpload,
 	}
 
 	serverCmd = &cobra.Command{
 		Use:   "server",
 		Short: "Start the web server for OAuth",
-		Run:   startWebServer,
+		Run:   StartWebServer,
 	}
 )
 
 func init() {
-	googleDriveCmd.Flags().StringVarP(&folderPath, "folder", "f", "", "Path to the local folder to upload")
+	googleDriveCmd.Flags().StringVarP(&FolderPath, "folder", "f", "", "Path to the local folder to upload")
 	googleDriveCmd.MarkFlagRequired("folder")
 	rootCmd.AddCommand(googleDriveCmd)
 
-	dropboxCmd.Flags().StringVarP(&folderPath, "folder", "f", "", "Path to the local folder to upload")
+	dropboxCmd.Flags().StringVarP(&FolderPath, "folder", "f", "", "Path to the local folder to upload")
 	dropboxCmd.MarkFlagRequired("folder")
-	dropboxCmd.Flags().StringVarP(&dropboxPath, "dropbox-path", "d", "", "Path in Dropbox to upload in")
+	dropboxCmd.Flags().StringVarP(&DropboxPath, "dropbox-path", "d", "", "Path in Dropbox to upload in")
 	dropboxCmd.MarkFlagRequired("dropbox-path")
 	rootCmd.AddCommand(dropboxCmd)
 }
 
-func startWebServer(cmd *cobra.Command, args []string) {
+func StartWebServer(cmd *cobra.Command, args []string) {
 	startURL := utils.GetOAuthStartURL()
-	err := openBrowser(startURL)
-	if err != nil {
-		log.Printf("Failed to open browser: %v", err)
-	}
-	http.HandleFunc("/oauth/callback", utils.HandleOAuthCallback)
+	log.Printf("Starting OAuth process automatically with URL: %s", startURL)
+
+	http.HandleFunc("/oauth/callback", func(w http.ResponseWriter, r *http.Request) {
+		code := r.URL.Query().Get("code")
+		if code == "" {
+			http.Error(w, "Code not found", http.StatusBadRequest)
+			return
+		}
+
+		config.LoadConfig()
+		cfg := config.GetConfig()
+		token, err := utils.ExchangeCodeForToken(cfg.AppKey, cfg.AppSecret, code, cfg.RedirectURL)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get token: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		tokenFile := "DropBoxToken.json"
+		if err := utils.SaveToken(tokenFile, token); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to save token: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "Access Token saved successfully")
+		log.Println("Access Token saved successfully")
+	})
+
+	http.HandleFunc("/oauth/start", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, startURL, http.StatusTemporaryRedirect)
+	})
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func openBrowser(url string) error {
-	var err error
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	return err
-}
-
-func executeDriveUpload(cmd *cobra.Command, args []string) error {
+func ExecuteDriveUpload(cmd *cobra.Command, args []string) error {
 	client, errResp := utils.GetDriveClient()
 	if errResp != nil {
 		log.Printf("Error getting HTTP client: %s", errResp.Error)
 		return fmt.Errorf("unable to get HTTP client: %s", errResp.Error)
 	}
-	if folderPath == "" {
+	if FolderPath == "" {
 		return errors.New("folder path is required")
 	}
-	if err := drive.UploadFolder(client, folderPath); err != nil {
+	if err := drive.UploadFolder(client, FolderPath); err != nil {
 		log.Printf("Error uploading folder to Google Drive: %v", err)
 		return fmt.Errorf("error uploading folder: %v", err)
 	}
-	log.Printf("Folder uploaded successfully to Google Drive from %s", folderPath)
+	log.Printf("Folder uploaded successfully to Google Drive from %s", FolderPath)
 	return nil
 }
 
-func executeDropboxUpload(cmd *cobra.Command, args []string) error {
-	if folderPath == "" || dropboxPath == "" {
+func ExecuteDropboxUpload(cmd *cobra.Command, args []string) error {
+	if FolderPath == "" || DropboxPath == "" {
 		return errors.New("folder path and dropbox path are required")
 	}
-	if err := dropbox.UploadFolderToDropbox(folderPath, dropboxPath); err != nil {
+	if err := dropbox.UploadFolderToDropbox(FolderPath, DropboxPath); err != nil {
 		log.Printf("Error uploading folder to Dropbox: %v", err)
 		return fmt.Errorf("error uploading folder to Dropbox: %v", err)
 	}
-	log.Printf("Folder uploaded successfully to Dropbox from %s to %s", folderPath, dropboxPath)
+	log.Printf("Folder uploaded successfully to Dropbox from %s to %s", FolderPath, DropboxPath)
 	return nil
 }
